@@ -1,7 +1,8 @@
 const Order = require('./order.model');
 const Cart = require('../cart/cart.model');
+const inventoryService = require('../inventory/inventory.service');
 
-// ✅ Create Order (checkout)
+// ✅ Create Order
 const createOrder = async () => {
   const cart = await Cart.findOne({ userId: 1 });
 
@@ -9,9 +10,17 @@ const createOrder = async () => {
     throw new Error('Cart is empty');
   }
 
+  // ✅ Reduce stock
+  for (const item of cart.items) {
+    await inventoryService.reduceStock(
+      item.productId,
+      item.quantity
+    );
+  }
+
   // ✅ Calculate total
   const totalAmount = cart.items.reduce(
-    (total, item) => total + item.price * item.quantity,
+    (sum, item) => sum + item.price * item.quantity,
     0
   );
 
@@ -23,24 +32,22 @@ const createOrder = async () => {
     status: 'CREATED'
   });
 
-  // ✅ Clear cart after order
+  // ✅ Clear cart
   cart.items = [];
   await cart.save();
 
   return order;
 };
 
-// ✅ Get all orders
+// ✅ ADD THESE
 const getAllOrders = async () => {
   return await Order.find();
 };
 
-// ✅ Get order by ID
 const getOrderById = async (id) => {
   return await Order.findById(id);
 };
 
-// ✅ Cancel order
 const cancelOrder = async (id) => {
   return await Order.findByIdAndUpdate(
     id,

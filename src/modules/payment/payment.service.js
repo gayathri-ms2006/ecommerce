@@ -1,6 +1,6 @@
 const Payment = require('./payment.model');
 const Order = require('../order/order.model');
-
+const inventoryService = require('../inventory/inventory.service');
 // ✅ Create Payment
 const createPayment = async ({ orderId, method }) => {
   const order = await Order.findById(orderId);
@@ -28,12 +28,31 @@ const updatePaymentStatus = async (id, status) => {
   payment.status = status;
   await payment.save();
 
-  // ✅ IMPORTANT: Update Order after payment success
+  const order = await Order.findById(payment.orderId);
+
+  
   if (status === 'SUCCESS') {
     await Order.findByIdAndUpdate(
       payment.orderId,
       { status: 'CONFIRMED' }
     );
+  }
+
+  
+  if (status === 'FAILED') {
+    if (order) {
+      for (const item of order.items) {
+        await inventoryService.restoreStock(
+          item.productId,
+          item.quantity
+        );
+      }
+
+      await Order.findByIdAndUpdate(
+        payment.orderId,
+        { status: 'FAILED' }
+      );
+    }
   }
 
   return payment;

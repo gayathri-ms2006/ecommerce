@@ -7,6 +7,8 @@ const orderRoutes = require('./modules/order/order.routes');
 const paymentRoutes = require('./modules/payment/payment.routes');
 
 
+const inventoryRoutes = require('./modules/inventory/inventory.routes');
+
 
 const app = express();
 
@@ -17,4 +19,5 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/inventory', inventoryRoutes);
 module.exports = app;
